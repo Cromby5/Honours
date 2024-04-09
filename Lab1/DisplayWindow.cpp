@@ -164,36 +164,6 @@ void DisplayWindow::ToggleImGuiWindow()
 
 void DisplayWindow::myCustomImguiWindow()
 {
-	if (ImGui::CollapsingHeader("Help"))
-	{
-		ImGui::SeparatorText("ABOUT THIS DEMO:");
-		ImGui::BulletText("This is coursework for the Games Programming 3 module, a basic asteroids game made using c++, OpenGL and SDL");
-		ImGui::BulletText("This Coursework contains the following extension material");
-
-		ImGui::SeparatorText("IMGUI");
-		ImGui::BulletText("A custom imgui window, as seen here allowing some values to be altered");
-		ImGui::BulletText("I wanted this for some basic scene editing stuff, very experimental");
-		ImGui::BulletText("Press TAB to open / close this window");
-
-		ImGui::SeparatorText("ASSIMP");
-		ImGui::BulletText("Assimp Model Loading Integration");
-		ImGui::BulletText("Updated SDL + GLEW versions to support x64, allowing assimp to function");
-		ImGui::BulletText("stb_image has also been updated to only require its header file");
-		ImGui::BulletText("Mesh, Texture class had to be updated to remove any relation to the old obj loader");
-		ImGui::BulletText("Essentially a rewrite of those classes to reimplement prior functions");
-
-		ImGui::SeparatorText("EnTT ECS");
-		ImGui::BulletText("Entity Component System using the EnTT library");
-		ImGui::BulletText("A basic implementation of an ECS, with a scene class and entity class");
-		ImGui::BulletText("It currently experiencing bugs so this may be mixed with the old model loading methods to present the work");
-		ImGui::BulletText("Textures are broken with the scene rendering method, a bug that I could not fix in time, we can see textures working as normal elsewhere");
-
-
-		ImGui::SeparatorText("GENERAL");
-		ImGui::BulletText("Better responsiveness on movement keys while held down,using SDL_GetKeyboardState");
-		ImGui::BulletText("Attempts to consider memory management, smart pointers etc used when possible / when rewriting areas");
-		ImGui::BulletText("Move / copy constructors, initilazation lists, operators");
-	}
 	ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our windows open/close state
 	ImGui::Checkbox("Vsync", &Vsync);      
 	if (Vsync)

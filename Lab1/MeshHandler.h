@@ -6,9 +6,28 @@
 #include "transform.h"
 #include "ShaderHandler.h"
 
+
+// Assimp to load many different file formats for reference. Not used in the testing due to it being known to be slow in debug mode and difficult with fbx files.
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+// Here we are focusing on 1 file format per reader for research purposes. obj reader, fbx sdk, json reader
+//#include <json/json.hpp> // TO HELP READ JSON FILES, in this case our glTF files
+//using json = nlohmann::json; MOVED TO TINYGLTF LIBRARY WHICH ALREADY USES THIS
+
+#include <tinyglTF/tiny_gltf.h>
+
+#include <fbxsdk.h> // This is the fbx sdk, it has to be installed locally (licencing issues + its 2gb) and is not included in the project code files
+#if _DEBUG //  The required libraries for the fbx sdk, linking them here as it's easier than adding them to the project settings / good for portability in the future.
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\debug\\libfbxsdk-md.lib")
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\debug\\libxml2-md.lib")
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\debug\\zlib-md.lib")
+#else
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\release\\libfbxsdk-md.lib")
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\release\\libxml2-md.lib")
+#pragma comment(lib, "C:\\Program Files\\Autodesk\\FBX\\FBX SDK\\2020.3.2\\lib\\vs2019\\x64\\release\\zlib-md.lib")
+#endif
 
 using std::vector;
 
@@ -229,10 +248,46 @@ private:
 		directory = other.directory;
 		return *this;
 	}
-
-
 };
 
+
+
+
+class GlTFModel // Ideally this would be in the Model class, read the file extension and use the correct reader for the file type. keeping it separate to compare with the other readers at the moment.
+{
+public:
+	GlTFModel();
+
+	bool loadGltfFile(tinygltf::Model& model);
+
+	void Draw(const ShaderHandler& shader);
+
+private:
+	//std::filesystem::path _file;
+	const char* path;
+
+	tinygltf::Model model;
+};
+
+struct scene;
+struct scene_data;
+struct mesh;
+struct geo_import_settings;
+
+class fbxDescriptor // this is a descriptor for the fbx model, it will be used to store the data from the fbx model
+{
+public:
+	fbxDescriptor(const char* file, scene* scene, scene_data* data);
+		
+
+private:
+	bool fbx_init;
+	void loadFbxFile(const char* file);
+
+	scene* _scene{nullptr};
+	scene_data* _data{nullptr};
+	
+};
 
 // OLD
 class MeshHandler

@@ -40,7 +40,7 @@ void GameProcess::gameProcessLoop()
 	while (_gameState != GameState::EXIT)
 	{
 		deltaTime.Update();
-		gameAudio.playBackMusic();
+		//gameAudio.playBackMusic();
 		Input();
 		_gameDisplay.newFrameImgui();
 		drawGame();
@@ -126,13 +126,13 @@ void GameProcess::drawGame()
 	//myCamera.SetLook(glm::vec3(0, 0, 0));
 	myTopDownCamera.SetLook(glm::vec3(0, 0, 0));
 
-	fbo.bindFBO(); // Draw to FBO
-		sky.drawSkyBox(myTopDownCamera);
-		objectHandler.drawObjects(myTopDownCamera,counter,newCount);
-		activeScene.Update(deltaTime.GetDeltaTime(), myTopDownCamera, counter, newCount,false);
-	fbo.unbindFBO();
+	//fbo.bindFBO(); // Draw to FBO
+	//	sky.drawSkyBox(myTopDownCamera);
+	//	objectHandler.drawObjects(myTopDownCamera,counter,newCount);
+	//	activeScene.Update(deltaTime.GetDeltaTime(), myTopDownCamera, counter, newCount,false);
+	//fbo.unbindFBO();
 
-	fbo.drawQuad(); // draw fbo to screen
+	//fbo.drawQuad(); // draw fbo to screen
 	glEnable(GL_DEPTH_TEST);
 	sky.drawSkyBox(myCamera);
 	objectHandler.drawObjects(myCamera, counter, newCount);
@@ -164,7 +164,7 @@ void GameProcess::CreateEntitys()
 
 
 	player = activeScene.CreateEntity("Ship");
-	player.AddComponent<Model>("../res/Models/ship.obj");
+	//player.AddComponent<Model>("../res/Models/ship.obj");
 	player.AddComponent<ShaderHandler>("..\\res\\Shaders\\shader");
 	player.AddComponent<TextureMap>("..\\res\\Textures\\Oak-Architextures.jpg");
 	player.AddComponent<Sphere>();
@@ -172,27 +172,7 @@ void GameProcess::CreateEntitys()
 	player.GetComponent<Transform>().SetPos(glm::vec3(0.0, 0.0, 0.0));
 	player.GetComponent<Transform>().SetScale(glm::vec3(0.008, 0.008, 0.008));
 
-	// lets actually have some asteroids in this scene to crash into at least
-	for (int i = 0; i < 30; i++)
-	{
-		auto& test2 = activeScene.CreateEntity("Asteroid");
-		test2.AddComponent<Model>("../res/Models/Rock1.obj");
-		test2.AddComponent<ShaderHandler>("..\\res\\Shaders\\shader");
-		test2.AddComponent<TextureMap>("..\\res\\Textures\\water.jpg");
-		test2.AddComponent<Sphere>();
-		// random position
-		test2.GetComponent<Transform>().SetPos(glm::vec3(rand() % 100 - 50, rand() % 100 - 50, rand() % 100 - 50));
-		test2.GetComponent<Transform>().SetScale(glm::vec3(0.1, 0.1, 0.1));
-		test2.GetComponent<Sphere>().SetPos(test2.GetComponent<Transform>().GetPos()); // do i really need to do this after?
-	}
-
-	// 2
-	//auto& test2 = activeScene.CreateEntity("stealing preloads from objhandler goes wrong");
-	//test2.AddComponent<Model>(objectHandler.models[0]);
-	//test2.AddComponent<ShaderHandler>("..\\res\\Shaders\\shader");
-	//test2.AddComponent<TextureMap>(objectHandler.textures[0]);
-	//test2.GetComponent<Transform>().SetPos(glm::vec3(0.0, -5.0, 0.0));
-
+	
 }
 
 void GameProcess::InstantiateEntityTest()

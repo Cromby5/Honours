@@ -1,8 +1,14 @@
 #include "MeshHandler.h"
 #include <vector>
 
+#define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <tinyglTF/tiny_gltf.h>
+
+//actually lost as to why including these is not what is needed, but the error is gone and it works.
+//#include "stb_image.h" 
+//#include "stb_image_write.h"
 
 #pragma region Mesh
 void Mesh::setupMesh()
@@ -249,6 +255,53 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
 	}
 
 	return textureID;
+}
+
+#pragma endregion
+
+#pragma region GLTFModel
+
+GlTFModel::GlTFModel()
+{
+	//_file = file;
+	//loadGltfFile(model);
+}
+
+bool GlTFModel::loadGltfFile(tinygltf::Model& model)
+{
+	//std::cout << " Start Loading glTF file" << _file << std::endl;
+	
+	// Load the model
+	std::string err;
+	std::string warn;
+	tinygltf::TinyGLTF loader;
+
+	//bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, _file.string());
+	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
+	//bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
+	if (!warn.empty()) {
+		std::cout << "GLTF: Warn: " << warn << std::endl;
+		//return false;
+	}
+	if (!err.empty()) {
+		std::cout << "GLTF: Err: " << err << std::endl;
+		//return false;
+	}
+	if (!ret) {
+		std::cout << "Failed to parse glTF file" << std::endl;
+		return false;
+	}
+	// Load the textures
+	//loadTextures();
+	// Load the meshes
+	//loadMeshes();
+
+	return true;
+}
+
+void GlTFModel::Draw(const ShaderHandler& shader)
+{
+
 }
 
 #pragma endregion
