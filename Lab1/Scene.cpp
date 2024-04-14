@@ -60,7 +60,7 @@ void Scene::Update(float deltaTime, const WorldCamera& cam, float counter, float
 
 		sceneModel.Draw(shader);
 
-		if (imgui)
+		if (imgui) // bad work around to update the position when using imgui
 		{
 			sphereCollider.SetPos(transform.GetPos());
 			sphereCollider.SetRadius(1.0f);
@@ -100,7 +100,6 @@ void Scene::Update(float deltaTime, const WorldCamera& cam, float counter, float
 			//rotate with the camer
 		
 			playTransform.SetRot(glm::vec3(cam.GetPitch(), cam.GetYaw(), 0.0f));
-
 		}
 
 		if (ImGui::BeginPopupContextWindow(0, 1 | ImGuiPopupFlags_NoOpenOverItems))
@@ -118,7 +117,6 @@ void Scene::Update(float deltaTime, const WorldCamera& cam, float counter, float
 
 void Scene::CheckCollisionsEntity(Entity entity, float deltaTime)
 {
-	
 	auto& view = m_registry.view<Sphere>();
 
 	auto& sphereCollider = view.get<Sphere>(entity);

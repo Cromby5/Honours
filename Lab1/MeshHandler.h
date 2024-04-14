@@ -251,22 +251,32 @@ private:
 };
 
 
-
+struct VaoRange
+{
+	GLsizei start; // Index of first element in vertexArrayObjects
+	GLsizei count; // Number of elements in range
+};
 
 class GlTFModel // Ideally this would be in the Model class, read the file extension and use the correct reader for the file type. keeping it separate to compare with the other readers at the moment.
-{
+{ // New class just for gltf / glb due to unique loading requirements, created with help from https://gltf-viewer-tutorial.gitlab.io/initialization/
 public:
 	GlTFModel();
+	GlTFModel(const std::string &path);
 
-	bool loadGltfFile(tinygltf::Model& model);
+	bool loadGltfFile(const std::string& path);
 
-	void Draw(const ShaderHandler& shader);
+	std::vector<GLuint> createBufferObjects(); // const tinygltf::Model& model
+	std::vector<GLuint> createVertexArrayObjects();
+
+	void Draw();
 
 private:
-	//std::filesystem::path _file;
-	const char* path;
 
+	//std::filesystem::path _file;
 	tinygltf::Model model;
+	std::vector<GLuint> bufferObjects;
+	std::vector<VaoRange> meshToVertexArrays;
+	std::vector<GLuint> vertexArrayObjects;
 };
 
 struct scene;

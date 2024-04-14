@@ -259,18 +259,22 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
 
 #pragma endregion
 
-#pragma region GLTFModel
+#pragma region GLTFModel 
 
 GlTFModel::GlTFModel()
 {
-	//_file = file;
-	//loadGltfFile(model);
+	std::cout << "TEMP GLTF" << std::endl;
 }
 
-bool GlTFModel::loadGltfFile(tinygltf::Model& model)
+GlTFModel::GlTFModel(std::string const& path)
 {
-	//std::cout << " Start Loading glTF file" << _file << std::endl;
-	
+	std::cout << "TEMP GLTF LOAD ATTEMPT 1" << std::endl;
+	loadGltfFile(path);
+}
+
+bool GlTFModel::loadGltfFile(std::string const& path)
+{
+	std::cout << "GLTF: Start Loading glTF file" << path << std::endl;
 	// Load the model
 	std::string err;
 	std::string warn;
@@ -295,14 +299,194 @@ bool GlTFModel::loadGltfFile(tinygltf::Model& model)
 	//loadTextures();
 	// Load the meshes
 	//loadMeshes();
-
+	std::cout << "GLTF: File Loaded" << path << std::endl;
 	return true;
 }
 
-void GlTFModel::Draw(const ShaderHandler& shader)
+// We do the following over using the general mesh class that would typically setup 
+// buffers and VAOs, as glTF already contains pre-defined buffers that can be directly loaded into the GPU (within OpenGL)
+std::vector<GLuint> GlTFModel::createBufferObjects()  
 {
+	std::cout << " GLTF: Creating Buffer Objects" << std::endl;
+	std::vector<GLuint> bufferObjects(model.buffers.size(), 0);
 
+	glGenBuffers(GLsizei(model.buffers.size()), bufferObjects.data());
+	for (size_t i = 0; i < model.buffers.size(); ++i) 
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, bufferObjects[i]);
+		glBufferStorage(GL_ARRAY_BUFFER, model.buffers[i].data.size(), model.buffers[i].data.data(), 0);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	std::cout << " GLTF: Buffer Objects Created" << std::endl;
+	return bufferObjects;
 }
+
+std::vector<GLuint> GlTFModel::createVertexArrayObjects()
+{
+	std::cout << " GLTF: Creating Vertex Array Objects" << std::endl;
+
+	meshToVertexArrays.resize(model.meshes.size());
+
+	// Helps to remind of the layout of the vertex attributes, don't want to mix up normal and texcoord again as I was manually putting in numbers before
+	const GLuint VERTEX_POSITION_I = 0;
+	const GLuint VERTEX_NORMAL_I = 2; // may need to swap normal and texcoord0
+	const GLuint VERTEX_TEXCOORD0_I = 1;
+
+	for (size_t i = 0; i < model.meshes.size(); ++i)
+	{
+		std::cout << " GLTF: VAO LOOP 1" << std::endl;
+		const tinygltf::Mesh& mesh = model.meshes[i];
+
+		VaoRange& vaoRange = meshToVertexArrays[i];
+		vaoRange.start = GLsizei(vertexArrayObjects.size());
+		vaoRange.count = GLsizei(mesh.primitives.size());
+
+		vertexArrayObjects.resize(vertexArrayObjects.size() + mesh.primitives.size());
+
+		//glGenVertexArrays(GLsizei(mesh.primitives.size()), vertexArrayObjects.data() + vaoRange.start);
+		glGenVertexArrays(vaoRange.count, &vertexArrayObjects[vaoRange.start]);
+
+		for (size_t j = 0; j < mesh.primitives.size(); ++j)
+		{
+			std::cout << " GLTF: VAO LOOP 2" << std::endl;
+			const auto vao = vertexArrayObjects[vaoRange.start + j];
+			const tinygltf::Primitive& primitive = mesh.primitives[j];
+			glBindVertexArray(vao);
+			// Position
+			{ // opening a scope allows you to use the same variable names in different blocks, useful for reusing variable names, below is a good example where the accessor looking for position,will be changed to normal in the next scope
+				std::cout << " GLTF: POS" << std::endl;
+				const auto iterator = primitive.attributes.find("POSITION");
+				if (iterator != end(primitive.attributes)) { // If "POSITION" has been found in the map
+				// (*iterator).first is the key "POSITION", (*iterator).second is the value, ie. the index of the accessor for this attribute
+					const auto accessorIdx = (*iterator).second;
+					const auto& accessor = model.accessors[accessorIdx];
+					const auto& bufferView = model.bufferViews[accessor.bufferView];
+					const auto bufferIdx = bufferView.buffer;
+			
+					glEnableVertexAttribArray(VERTEX_POSITION_I);
+
+					assert(GL_ARRAY_BUFFER == bufferView.target);
+					glBindBuffer(GL_ARRAY_BUFFER, bufferView.target); // ERROR HERE using bufferObjects[bufferIdx], changed to bufferView.target
+
+					// "tinygltf converts strings type like "VEC3, "VEC2" to the number of components, stored in accessor.type"
+					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;
+					glVertexAttribPointer(VERTEX_POSITION_I, accessor.type, accessor.componentType, GL_FALSE, GLsizei(bufferView.byteStride), (const GLvoid*)byteOffset);
+			}
+			// Normal, repeated code but for normals
+			{
+				std::cout << " GLTF: NORMAL" << std::endl;
+				const auto iterator = primitive.attributes.find("NORMAL");
+				if (iterator != end(primitive.attributes)) {
+					const auto accessorIdx = (*iterator).second;
+					const auto& accessor = model.accessors[accessorIdx];
+					const auto& bufferView = model.bufferViews[accessor.bufferView];
+					const auto bufferIdx = bufferView.buffer;
+
+					glEnableVertexAttribArray(VERTEX_NORMAL_I);
+
+					assert(GL_ARRAY_BUFFER == bufferView.target);
+					glBindBuffer(GL_ARRAY_BUFFER, bufferView.target);
+					// no need to get the byteOffset again, as it is the same as the position
+					glVertexAttribPointer(VERTEX_NORMAL_I, accessor.type, accessor.componentType, GL_FALSE, GLsizei(bufferView.byteStride), (const GLvoid*)(accessor.byteOffset + bufferView.byteOffset));
+				}
+			}
+			// Texcoord0, repeated code but for Texcoord0
+			{
+				std::cout << " GLTF: TEXCOORD" << std::endl;
+				const auto iterator = primitive.attributes.find("TEXCOORD_0");
+				if (iterator != end(primitive.attributes))
+				{
+					const auto accessorIdx = (*iterator).second;
+					const auto& accessor = model.accessors[accessorIdx];
+					const auto& bufferView = model.bufferViews[accessor.bufferView];
+					const auto bufferIdx = bufferView.buffer;
+
+					glEnableVertexAttribArray(VERTEX_TEXCOORD0_I);
+
+					assert(GL_ARRAY_BUFFER == bufferView.target);
+					glBindBuffer(GL_ARRAY_BUFFER, bufferView.target);
+					// no need to get the byteOffset again, as it is the same as the position
+					glVertexAttribPointer(VERTEX_TEXCOORD0_I, accessor.type, accessor.componentType, GL_FALSE, GLsizei(bufferView.byteStride), (const GLvoid*)(accessor.byteOffset + bufferView.byteOffset));
+				}
+			}
+		}
+		// index
+			if (primitive.indices >= 0) 
+			{
+				std::cout << " GLTF: INDEX" << std::endl;
+				const auto accessorIdx = primitive.indices;
+				const auto& accessor = model.accessors[accessorIdx];
+				const auto& bufferView = model.bufferViews[accessor.bufferView];
+				const auto bufferIdx = bufferView.buffer;
+
+				assert(GL_ELEMENT_ARRAY_BUFFER == bufferView.target);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferView.target);
+			}
+		}
+	}
+	glBindVertexArray(0); // unbind the VAO
+	std::clog << "GLTF: Number of VAOs: " << vertexArrayObjects.size() << std::endl; // print the number of VAOs created
+	return vertexArrayObjects; // finally return the VAOs
+}
+
+void GlTFModel::Draw()
+{
+	std::cout << " GLTF: DRAW" << std::endl;
+	const std::function<void(int, const glm::mat4&)> drawNode = [&](int nodeIdx, const glm::mat4& parentMatrix) {
+		// TODO The drawNode function
+		const auto& node = model.nodes[nodeIdx];
+		//const glm::mat4 modelMatrix = getLocalToWorldMatrix(node, parentMatrix);
+		const glm::mat4 modelMatrix = glm::mat4(1); // TEMP
+		// If the node references a mesh (a node can also reference a camera, or a light)
+		if (node.mesh >= 0) {
+			//auto mvMatrix = viewMatrix * modelMatrix; // Also called localToCamera matrix
+			//const auto mvpMatrix = projMatrix * mvMatrix; // Also called localToScreen matrix
+
+			// Normal matrix is necessary to maintain normal vectors
+			// orthogonal to tangent vectors
+			// https://www.lighthouse3d.com/tutorials/glsl-12-tutorial/the-normal-matrix/
+
+			//const auto normalMatrix = glm::transpose(glm::inverse(mvMatrix));
+
+			//glUniformMatrix4fv(modelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+			//glUniformMatrix4fv(modelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+			//glUniformMatrix4fv(normalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+			const auto& mesh = model.meshes[node.mesh];
+			const auto& vaoRange = meshToVertexArrays[node.mesh];
+			for (size_t pIdx = 0; pIdx < mesh.primitives.size(); ++pIdx) {
+				const auto vao = vertexArrayObjects[vaoRange.start + pIdx];
+				const auto& primitive = mesh.primitives[pIdx];
+				glBindVertexArray(vao);
+				if (primitive.indices >= 0) {
+					const auto& accessor = model.accessors[primitive.indices];
+					const auto& bufferView = model.bufferViews[accessor.bufferView];
+					const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;
+					glDrawElements(primitive.mode, GLsizei(accessor.count), accessor.componentType, (const GLvoid*)byteOffset);
+				}
+				else {
+					// Take first accessor to get the count
+					const auto accessorIdx = (*begin(primitive.attributes)).second;
+					const auto& accessor = model.accessors[accessorIdx];
+					glDrawArrays(primitive.mode, 0, GLsizei(accessor.count));
+				}
+			}
+		}
+		// Draw children
+		for (const auto childNodeIdx : node.children) {
+			drawNode(childNodeIdx, modelMatrix);
+		}
+	};
+
+	// Draw the scene referenced by gltf file
+	if (model.defaultScene >= 0) {
+		// TODO Draw all nodes
+		for (const auto nodeIdx : model.scenes[model.defaultScene].nodes) {
+			drawNode(nodeIdx, glm::mat4(1));
+		}
+	}
+};
 
 #pragma endregion
 
@@ -368,7 +552,6 @@ MeshHandler::MeshHandler(const std::string& filename)
 {
 	loadModel(filename);
 }
-
 
 void MeshHandler::loadModel(const std::string& filename)
 {

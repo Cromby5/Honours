@@ -52,8 +52,10 @@ private:
 	DeltaTime deltaTime;
 	FBO fbo;
 	FBO fbo2;
-
+	// TEMP
 	Entity player;
+
+
 
 	float counter = 0.0f;
 	float newCount = 0.0f;

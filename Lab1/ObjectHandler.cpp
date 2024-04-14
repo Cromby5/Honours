@@ -25,28 +25,30 @@ void ObjectHandler::initObjects()
 
 	objects.reserve(5); // reserve 15 objects to prevent reallocation of the vector in this example scene.
 
-	tempObject.LoadObject(models[1], textures[1], shaders[0]); // Exploding monkey head
-	objects.emplace_back(tempObject); // Add the object to the vector of objects
-	// Adjust position,rotation,scale
-	objects[0].SetObjectPos(glm::vec3(10.0, 1.5, 3.0));
 	
 	// BACKPACK, texture 3 is the backpack textures
 	tempObject.LoadObject(models[0],textures[3], shaders[0]);
 	objects.emplace_back(tempObject);
-	objects[1].SetObjectPos(glm::vec3(0, -6.0, 0));
-	objects[1].SetObjectRot(glm::vec3(0, 0, 0));
+	objects[0].SetObjectPos(glm::vec3(0, -6.0, 0));
+	objects[0].SetObjectRot(glm::vec3(0, 0, 0));
 
 	tempObject.LoadObject(models[2], textures[4], shaders[0]); // FBX TEST
 	objects.emplace_back(tempObject);
-	objects[2].SetObjectPos(glm::vec3(10, -6.0, 0));
-	objects[2].SetObjectRot(glm::vec3(0, 0, 0));
-	objects[2].SetObjectScale(glm::vec3(0.3, 0.3, 0.3));
+	objects[1].SetObjectPos(glm::vec3(10, -6.0, 0));
+	objects[1].SetObjectRot(glm::vec3(0, 0, 0));
+	objects[1].SetObjectScale(glm::vec3(0.3, 0.3, 0.3));
 
 	tempObject.LoadObject(models[3], textures[5], shaders[0]); // FBX TEST 2
 	objects.emplace_back(tempObject);
-	objects[3].SetObjectPos(glm::vec3(10, -6.0, 7));
-	objects[3].SetObjectRot(glm::vec3(0, 0, 0));
-	objects[3].SetObjectScale(glm::vec3(0.3, 0.3, 0.8));
+	objects[2].SetObjectPos(glm::vec3(10, -6.0, 7));
+	objects[2].SetObjectRot(glm::vec3(0, 0, 0));
+	objects[2].SetObjectScale(glm::vec3(0.3, 0.3, 0.8));
+
+
+	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf"); // OUTPUT 1 VAO
+	testModel.loadGltfFile("../res/Models/glTF/Sponza/glTF/Sponza.gltf"); // OUTPUT 103 VAO
+	testModel.createBufferObjects();
+	testModel.createVertexArrayObjects();
 
 }
 
@@ -164,6 +166,7 @@ void ObjectHandler::drawObjects(WorldCamera& myCamera , float counter, float new
 		objects[i]._shader.Use();
 		objects[i]._shader.Update(objects[i]._transform, myCamera, counter, newCount);
 		objects[i]._texture.Bind(0);
+		testModel.Draw();
 		// Temp overrides, carried across from inital project state to test the new object handler.
 		// For spec/normal map testing on the bricks and backpack
 		/*

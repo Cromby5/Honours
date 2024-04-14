@@ -90,6 +90,7 @@ private:
 	ShaderHandler tempShader;
 
 	Model tempModel;
+	GlTFModel testModel;
 	// objects is a vector of objects that will be drawn in the scene. 
 	std::vector<Object> objects;
 
