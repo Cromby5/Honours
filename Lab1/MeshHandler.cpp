@@ -6,7 +6,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tinyglTF/tiny_gltf.h>
 
-
+#include "windows.h"
+#include "psapi.h"
 //actually lost as to why including these is not what is needed, but the error is gone and it works.
 //#include "stb_image.h" 
 //#include "stb_image_write.h"
@@ -353,7 +354,7 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 
 	for (size_t i = 0; i < model.meshes.size(); ++i)
 	{
-		std::cout << " GLTF: VAO LOOP 1" << std::endl;
+		//std::cout << " GLTF: VAO LOOP 1" << std::endl;
 		const tinygltf::Mesh& mesh = model.meshes[i];
 
 		VaoRange& vaoRange = meshToVertexArrays[i];
@@ -367,13 +368,13 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 
 		for (size_t j = 0; j < mesh.primitives.size(); ++j)
 		{
-			std::cout << " GLTF: VAO LOOP 2" << std::endl;
+			//std::cout << " GLTF: VAO LOOP 2" << std::endl;
 			const auto vao = vertexArrayObjects[vaoRange.start + j];
 			const tinygltf::Primitive& primitive = mesh.primitives[j];
 			glBindVertexArray(vao);
 			// Position
 			{ // opening a scope allows you to use the same variable names in different blocks, useful for reusing variable names, below is a good example where the accessor looking for position,will be changed to normal in the next scope
-				std::cout << " GLTF: POS" << std::endl;
+				//std::cout << " GLTF: POS" << std::endl;
 				const auto iterator = primitive.attributes.find("POSITION");
 				if (iterator != end(primitive.attributes)) { // If "POSITION" has been found in the map
 				// (*iterator).first is the key "POSITION", (*iterator).second is the value, ie. the index of the accessor for this attribute
@@ -393,7 +394,7 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 			}
 			// Normal, repeated code but for normals
 			{
-				std::cout << " GLTF: NORMAL" << std::endl;
+				//std::cout << " GLTF: NORMAL" << std::endl;
 				const auto iterator = primitive.attributes.find("NORMAL");
 				if (iterator != end(primitive.attributes)) {
 					const auto accessorIdx = (*iterator).second;
@@ -411,7 +412,7 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 			}
 			// Texcoord0, repeated code but for Texcoord0
 			{
-				std::cout << " GLTF: TEXCOORD" << std::endl;
+				//std::cout << " GLTF: TEXCOORD" << std::endl;
 				const auto iterator = primitive.attributes.find("TEXCOORD_0");
 				if (iterator != end(primitive.attributes))
 				{
@@ -432,7 +433,7 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 		// index
 			if (primitive.indices >= 0) 
 			{
-				std::cout << " GLTF: INDEX" << std::endl;
+				//std::cout << " GLTF: INDEX" << std::endl;
 				const auto accessorIdx = primitive.indices;
 				const auto& accessor = model.accessors[accessorIdx];
 				const auto& bufferView = model.bufferViews[accessor.bufferView];
@@ -446,7 +447,68 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 	glBindVertexArray(0); // unbind the VAO
 	std::clog << "GLTF: Number of VAOs: " << vertexArrayObjects.size() << std::endl; // print the number of VAOs created
 	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+	SIZE_T virtualMemUsedByMe = pmc.PrivateUsage;
+	std::cout << "Memory used by GLTF Model: " << virtualMemUsedByMe << std::endl;
+	std::cout << "--------------------------------------------" << std::endl;
 	return vertexArrayObjects; // finally return the VAOs
+};
+
+std::vector<GLuint> GlTFModel::createTextureObjects()
+{
+	Timer t;
+	std::cout << " GLTF: Creating Texture Objects" << std::endl;
+	std::vector<GLuint> textureObjects(model.textures.size(), 0);
+
+	// default sampler:
+	// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#texturesampler
+	// "When undefined, a sampler with repeat wrapping and auto filtering should
+	// be used."
+	tinygltf::Sampler defaultSampler;
+	defaultSampler.minFilter = GL_LINEAR;
+	defaultSampler.magFilter = GL_LINEAR;
+	defaultSampler.wrapS = GL_REPEAT;
+	defaultSampler.wrapT = GL_REPEAT;
+	//defaultSampler.wrapR = GL_REPEAT;
+
+	glActiveTexture(GL_TEXTURE0);
+
+	glGenTextures(GLsizei(model.textures.size()), textureObjects.data());
+	for (size_t i = 0; i < model.textures.size(); ++i) {
+		const auto& texture = model.textures[i];
+		assert(texture.source >= 0);
+		const auto& image = model.images[texture.source];
+
+		const auto& sampler =
+			texture.sampler >= 0 ? model.samplers[texture.sampler] : defaultSampler;
+		glBindTexture(GL_TEXTURE_2D, textureObjects[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+			GL_RGBA, image.pixel_type, image.image.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+			sampler.minFilter != -1 ? sampler.minFilter : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+			sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, sampler.wrapR);
+
+		if (sampler.minFilter == GL_NEAREST_MIPMAP_NEAREST ||
+			sampler.minFilter == GL_NEAREST_MIPMAP_LINEAR ||
+			sampler.minFilter == GL_LINEAR_MIPMAP_NEAREST ||
+			sampler.minFilter == GL_LINEAR_MIPMAP_LINEAR) {
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	std::cout << " GLTF: Texture Objects Created" << std::endl;
+	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "--------------------------------------------" << std::endl;
+
+	return textureObjects;
+
 }
 
 void GlTFModel::Draw()
@@ -514,7 +576,9 @@ void GlTFModel::Draw()
 FBXModel::FBXModel()
 {
 	// Load the model
-	loadFbxModel("../res/Models/Honours Models/fbx/avocado.fbx");
+	//loadFbxModel("../res/Models/Honours Models/fbx/avocado.fbx");
+	//loadFbxModel("../res/Models/Honours Models/fbx/Sci-Fi soldier/source/Idle.fbx");
+	loadFbxModel("../res/Models/Honours Models/fbx/BarramundiFish.fbx");
 }
 
 FBXModel::FBXModel(std::string const& path)
@@ -535,23 +599,173 @@ void FBXModel::loadFbxModel(std::string const& path)
 	std::cout << "FBX: Start Loading FBX file" << path << std::endl;
 
 	// Load the model
-	FbxManager* sdkManager = FbxManager::Create();
-	FbxIOSettings* ios = FbxIOSettings::Create(sdkManager, IOSROOT);
-	sdkManager->SetIOSettings(ios);
-	FbxImporter* importer = FbxImporter::Create(sdkManager, "");
-	bool ret = importer->Initialize(path.c_str(), -1, sdkManager->GetIOSettings());
+	_manager = FbxManager::Create();
+
+	FbxIOSettings* ios = FbxIOSettings::Create(_manager, IOSROOT);
+	_manager->SetIOSettings(ios);
+
+	_importer = FbxImporter::Create(_manager, "");
+	
+	bool ret = _importer->Initialize(path.c_str(), -1, _manager->GetIOSettings());
 	if (!ret) {
 		std::cerr << "FBX: Call to FbxImporter::Initialize() failed.\n";
-		std::cerr << "FBX: Error returned: " << importer->GetStatus().GetErrorString() << "\n\n";
+		std::cerr << "FBX: Error returned: " << _importer->GetStatus().GetErrorString() << "\n\n";
 		return;
 	}
-	FbxScene* scene = FbxScene::Create(sdkManager, "myScene");
-	importer->Import(scene);
-	importer->Destroy();
+	_fbxScene = FbxScene::Create(_manager, "myScene");
+
+
+	//get mesh
+	_importer->Import(_fbxScene);
+
+	if (_fbxScene->GetRootNode())
+	{
+		SetupNode(_fbxScene->GetRootNode(), "null");
+	}
+
+	_importer->Destroy();
+
 	std::cout << "FBX: File Loaded" << path << std::endl;
 	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	
+
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+	SIZE_T virtualMemUsedByMe = pmc.PrivateUsage;
+	std::cout << "Memory used by FBX Model: " << virtualMemUsedByMe << std::endl;
+
 	std::cout << "--------------------------------------------" << std::endl;
 }
+
+void FBXModel::SetupNode(FbxNode* pNode, std::string parentName)
+{
+
+	if (pNode->GetNodeAttribute() == NULL)
+	{
+		std::cout << "NULL Node Attribute\n";
+	}
+	else
+	{
+		attributeType = (pNode->GetNodeAttribute()->GetAttributeType());
+	}
+
+	if (attributeType == FbxNodeAttribute::eMesh)
+	{
+		FbxMesh* mesh = pNode->GetMesh();
+		SetupMesh(mesh);
+	}
+	//else if (attributeType == FbxNodeAttribute::eSkeleton)
+	//{
+	// // SCRAPPED FEATURE
+	//	FbxSkeleton* skeleton = pNode->GetSkeleton();
+	//	//SetupSkeleton(skeleton);
+	//}
+	//else if (attributeType == FbxNodeAttribute::eNull)
+	//{
+	//	std::cout << "NULL Node\n";
+	//}
+	//else if (attributeType == FbxNodeAttribute::eMarker)
+	//{
+	//	std::cout << "Marker Node\n";
+	//}
+	//else if (attributeType == FbxNodeAttribute::eCamera)
+	//{
+	//	std::cout << "Camera Node\n";
+	//}
+	//else if (attributeType == FbxNodeAttribute::eLight)
+	//{
+	//	std::cout << "Light Node\n";
+	//}
+	else
+	{
+		std::cout << "Unknown Node Attribute\n";
+	}
+	for (int i = 0; i < pNode->GetChildCount(); i++)
+	{
+		SetupNode(pNode->GetChild(i), pNode->GetName());
+	}
+}
+
+void FBXModel::SetupMesh(FbxMesh* pMesh)
+{
+	std::cout << "FBX: Mesh " << pMesh->GetName() << std::endl;
+	// Vertices
+	FbxVector4* vertices = pMesh->GetControlPoints();
+	for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
+	{
+		std::cout << "Vertex " << i << ": " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << std::endl;
+	}
+	// Indices
+	for (int i = 0; i < pMesh->GetPolygonCount(); i++)
+	{
+		int numVertices = pMesh->GetPolygonSize(i);
+		for (int j = 0; j < numVertices; j++)
+		{
+			int vertexIndex = pMesh->GetPolygonVertex(i, j);
+			std::cout << "Index" << vertexIndex << std::endl;
+		}
+	}
+
+	// Normals
+	FbxGeometryElementNormal* normalElement = pMesh->GetElementNormal();
+	if (normalElement)
+	{
+		for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
+		{
+			FbxVector4 normal = normalElement->GetDirectArray().GetAt(i);
+			std::cout << "Normal " << i << ": " << normal[0] << " " << normal[1] << " " << normal[2] << std::endl;
+		}
+	}
+
+	// UVs
+	FbxGeometryElementUV* uvElement = pMesh->GetElementUV();
+	if (uvElement)
+	{
+		for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
+		{
+			FbxVector2 uv = uvElement->GetDirectArray().GetAt(i);
+			std::cout << "UV " << i << ": " << uv[0] << " " << uv[1] << std::endl;
+		}
+	}
+
+	// Materials
+	FbxNode* node = pMesh->GetNode();
+	if (node)
+	{
+		int materialCount = node->GetMaterialCount();
+		for (int i = 0; i < materialCount; i++)
+		{
+			FbxSurfaceMaterial* material = node->GetMaterial(i);
+			std::cout << "Material " << i << ": " << material->GetName() << std::endl;
+		}
+	}
+
+	// Textures
+	FbxProperty property = pMesh->GetFirstProperty();
+	while (property.IsValid())
+	{
+		if (property.GetSrcObjectCount<FbxTexture>() > 0)
+		{
+			FbxTexture* texture = property.GetSrcObject<FbxTexture>();
+			std::cout << "Texture: " << texture->GetName() << std::endl;
+		}
+		property = pMesh->GetNextProperty(property);
+	}
+	// Skinning
+	FbxSkin* skin = (FbxSkin*)pMesh->GetDeformer(0, FbxDeformer::eSkin);
+	if (skin)
+	{
+		std::cout << "Skinning" << std::endl;
+		int clusterCount = skin->GetClusterCount();
+		for (int i = 0; i < clusterCount; i++)
+		{
+			FbxCluster* cluster = skin->GetCluster(i);
+			FbxNode* link = cluster->GetLink();
+			std::cout << "Cluster " << i << ": " << link->GetName() << std::endl;
+		}
+
+	}
+};
 
 
 #pragma endregion

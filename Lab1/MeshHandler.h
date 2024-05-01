@@ -269,7 +269,7 @@ public:
 
 	std::vector<GLuint> createBufferObjects(); // const tinygltf::Model& model
 	std::vector<GLuint> createVertexArrayObjects();
-
+	std::vector<GLuint> createTextureObjects();
 	void Draw();
 
 private:
@@ -279,6 +279,7 @@ private:
 	std::vector<GLuint> bufferObjects;
 	std::vector<VaoRange> meshToVertexArrays;
 	std::vector<GLuint> vertexArrayObjects;
+	std::vector<GLuint> textureObjects;
 };
 #pragma endregion
 
@@ -330,7 +331,12 @@ public:
 	FBXModel(const std::string& filename);
 	~FBXModel();
 
+	void SetupNode(FbxNode* pNode, std::string parentName);
+	void SetupMesh(FbxMesh* pMesh);
 	void loadFbxModel(const std::string& filename);
+
+
+	void draw();
 
 
 private:
@@ -341,7 +347,7 @@ private:
 	FbxGeometryConverter* _converter{ nullptr };
 	FbxNode* _rootNode{ nullptr };
 	
-
+	FbxNodeAttribute::EType attributeType;
 };
 #pragma endregion
 

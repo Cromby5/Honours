@@ -16,6 +16,24 @@ ObjectHandler::~ObjectHandler()
 // Extra mess from previous coursework, not really related to graphics programming so it will stay like this.
 void ObjectHandler::initObjects()
 {
+	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf",0); // OUTPUT 1 VAO
+	
+	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/avocado/avocado.gltf", 0);
+	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/Sci-Fi soldier/scene.gltf", 0);
+    testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/BarramundiFish/BarramundiFish.gltf", 0);
+
+
+	testgltfModel.createTextureObjects();
+	testgltfModel.createBufferObjects();
+	testgltfModel.createVertexArrayObjects();
+
+	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/avocado.glb", 1);
+	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/sci-fi_supersoldier.glb", 1);
+	testglbModel.createTextureObjects();
+	testglbModel.createBufferObjects();
+	testglbModel.createVertexArrayObjects();
+
+
 	// Unsure whats going on that I can't use the constructor to load the objects directly into the vector of objects without the data being wrong in someway,
 	// making a temp new object/texture/shader and then loading it into the vector works fine though from testing.
 	// Pre load the assets to save time and memory
@@ -27,7 +45,7 @@ void ObjectHandler::initObjects()
 
 	
 	// BACKPACK, texture 3 is the backpack textures
-	tempObject.LoadObject(models[0],textures[3], shaders[0]);
+	tempObject.LoadObject(models[2],textures[3], shaders[0]);
 	objects.emplace_back(tempObject);
 	objects[0].SetObjectPos(glm::vec3(0, -6.0, 0));
 	objects[0].SetObjectRot(glm::vec3(0, 0, 0));
@@ -38,15 +56,6 @@ void ObjectHandler::initObjects()
 	//objects[1].SetObjectPos(glm::vec3(10, -6.0, 7));
 	//objects[1].SetObjectRot(glm::vec3(0, 0, 0));
 	//objects[1].SetObjectScale(glm::vec3(0.3, 0.3, 0.8));
-
-
-	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf",0); // OUTPUT 1 VAO
-	testModel.loadGltfFile("../res/Models/Honours Models/glTF/avocado/avocado.gltf",0); 
-	//testModel.loadGltfFile("../res/Models/Honours Models/glb/avocado.glb", 1);
-
-	testModel.createBufferObjects();
-	testModel.createVertexArrayObjects();
-
 }
 
 void ObjectHandler::initTextures()
@@ -123,9 +132,9 @@ void ObjectHandler::initMeshes()
 	
 	// If we use \\ instead of / it will not work beyond windows enviroments, better to prepare for cross platform use.
 
-	tempModel.loadModel("../res/Models/backpack/backpack.obj");
-	models.emplace_back(tempModel);
-	tempModel.clearModel();
+	//tempModel.loadModel("../res/Models/backpack/backpack.obj");
+	//models.emplace_back(tempModel);
+	//tempModel.clearModel();
 
 	tempModel.loadModel("../res/Models/monkey3.obj");
 	models.emplace_back(tempModel);
@@ -133,11 +142,24 @@ void ObjectHandler::initMeshes()
 
 	//OTHER FORMAT ZONE
 
-	tempModel.loadModel("../res/Models/towerRound_sampleB.fbx");
+	//tempModel.loadModel("../res/Models/towerRound_sampleB.fbx");
+	//models.emplace_back(tempModel);
+	//tempModel.clearModel();
+
+	tempModel.loadModel("../res/Models/Honours Models/glTF/avocado/avocado.gltf");
 	models.emplace_back(tempModel);
 	tempModel.clearModel();
 
-	tempModel.loadModel("../res/Models/Honours Models/glTF/Sponza/glTF/Sponza.gltf");
+	tempModel.loadModel("../res/Models/Honours Models/glb/avocado.glb");
+	models.emplace_back(tempModel);
+	tempModel.clearModel(); 
+
+	tempModel.loadModel("../res/Models/Honours Models/obj/avocado/avocado.obj");
+	models.emplace_back(tempModel);
+	tempModel.clearModel();
+
+	
+	tempModel.loadModel("../res/Models/Honours Models/fbx/avocado.fbx");
 	models.emplace_back(tempModel);
 	tempModel.clearModel();
 }
@@ -158,7 +180,8 @@ void ObjectHandler::drawObjects(WorldCamera& myCamera , float counter, float new
 		objects[i]._shader.Use();
 		objects[i]._shader.Update(objects[i]._transform, myCamera, counter, newCount);
 		objects[i]._texture.Bind(0);
-		testModel.Draw();
+		testgltfModel.Draw();
+		testglbModel.Draw();
 		// Temp overrides, carried across from inital project state to test the new object handler.
 		// For spec/normal map testing on the bricks and backpack
 		/*

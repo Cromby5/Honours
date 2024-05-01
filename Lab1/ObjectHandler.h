@@ -93,7 +93,8 @@ private:
 
 	Model tempModel;
 	FBXModel testFBXModel;
-	GlTFModel testModel;
+	GlTFModel testgltfModel;
+	GlTFModel testglbModel;
 	tinyObjModel tinyobjtestModel;
 	// objects is a vector of objects that will be drawn in the scene. 
 	std::vector<Object> objects;
