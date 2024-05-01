@@ -9,6 +9,8 @@
 #include "WorldCamera.h"
 #include "AudioHandler.h"
 
+#include "tinyobjmodel.h"
+
 // Each indivdual object that will be stored by the handler
 struct Object
 {
@@ -90,7 +92,9 @@ private:
 	ShaderHandler tempShader;
 
 	Model tempModel;
+	FBXModel testFBXModel;
 	GlTFModel testModel;
+	tinyObjModel tinyobjtestModel;
 	// objects is a vector of objects that will be drawn in the scene. 
 	std::vector<Object> objects;
 

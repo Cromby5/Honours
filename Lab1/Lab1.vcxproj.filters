@@ -31,6 +31,9 @@
     <Filter Include="Header Files\honours">
       <UniqueIdentifier>{73ff2f42-746a-4f03-810a-dfa4442299b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\honours">
+      <UniqueIdentifier>{32cd4b7a-5ef1-40da-bccd-d65efb2fbf2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -108,6 +111,9 @@
     <ClCompile Include="Entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tinyobjmodel.cpp">
+      <Filter>Source Files\honours</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameProcess.h">
@@ -166,6 +172,12 @@
     </ClInclude>
     <ClInclude Include="stb_image_write.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Clock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyobjmodel.h">
+      <Filter>Header Files\honours</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

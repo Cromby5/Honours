@@ -6,6 +6,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tinyglTF/tiny_gltf.h>
 
+
 //actually lost as to why including these is not what is needed, but the error is gone and it works.
 //#include "stb_image.h" 
 //#include "stb_image_write.h"
@@ -34,7 +35,6 @@ void Mesh::setupMesh()
 	// vertex normals
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
 
 	/*
 	// vertex tangent
@@ -101,6 +101,8 @@ void Model::clearModel()
 
 void Model::loadModel(std::string const &path)
 {
+	Timer t;
+	std::cout << "ASSIMP:: Loading Model " << path << std::endl;
 	Assimp::Importer import;
 	const aiScene * scene = import.ReadFile(path, aiProcess_Triangulate  | aiProcess_JoinIdenticalVertices);
 
@@ -112,7 +114,9 @@ void Model::loadModel(std::string const &path)
 	directory = path.substr(0, path.find_last_of('/'));
 
 	processNode(scene->mRootNode, scene);
-	std::cout << "ASSIMP:: Loading Model " << path << std::endl;
+	std::cout << "ASSIMP:: Loaded Model " << path << std::endl;
+	std::cout << "Total Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "--------------------------------------------" << std::endl;
 }
 
 
@@ -259,6 +263,7 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
 
 #pragma endregion
 
+// I would move these to their own separate files, but for some reason it breaks something else im not even using below. 
 #pragma region GLTFModel 
 
 GlTFModel::GlTFModel()
@@ -269,20 +274,28 @@ GlTFModel::GlTFModel()
 GlTFModel::GlTFModel(std::string const& path)
 {
 	std::cout << "TEMP GLTF LOAD ATTEMPT 1" << std::endl;
-	loadGltfFile(path);
+	loadGltfFile(path,0);
 }
 
-bool GlTFModel::loadGltfFile(std::string const& path)
+bool GlTFModel::loadGltfFile(std::string const& path, int type)
 {
+	Timer t;
 	std::cout << "GLTF: Start Loading glTF file" << path << std::endl;
 	// Load the model
 	std::string err;
 	std::string warn;
 	tinygltf::TinyGLTF loader;
 
-	//bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, _file.string());
-	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
-	//bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
+	bool ret = 0;
+	if (type == 0)
+	{
+		ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
+	}
+	else if (type == 1)
+	{
+		ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);  // for binary glTF(.glb)
+	}
+
 	if (!warn.empty()) {
 		std::cout << "GLTF: Warn: " << warn << std::endl;
 		//return false;
@@ -300,6 +313,8 @@ bool GlTFModel::loadGltfFile(std::string const& path)
 	// Load the meshes
 	//loadMeshes();
 	std::cout << "GLTF: File Loaded" << path << std::endl;
+	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "--------------------------------------------" << std::endl;
 	return true;
 }
 
@@ -307,6 +322,7 @@ bool GlTFModel::loadGltfFile(std::string const& path)
 // buffers and VAOs, as glTF already contains pre-defined buffers that can be directly loaded into the GPU (within OpenGL)
 std::vector<GLuint> GlTFModel::createBufferObjects()  
 {
+	Timer t;
 	std::cout << " GLTF: Creating Buffer Objects" << std::endl;
 	std::vector<GLuint> bufferObjects(model.buffers.size(), 0);
 
@@ -319,11 +335,13 @@ std::vector<GLuint> GlTFModel::createBufferObjects()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	std::cout << " GLTF: Buffer Objects Created" << std::endl;
+	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
 	return bufferObjects;
 }
 
 std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 {
+	Timer t;
 	std::cout << " GLTF: Creating Vertex Array Objects" << std::endl;
 
 	meshToVertexArrays.resize(model.meshes.size());
@@ -427,12 +445,13 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 	}
 	glBindVertexArray(0); // unbind the VAO
 	std::clog << "GLTF: Number of VAOs: " << vertexArrayObjects.size() << std::endl; // print the number of VAOs created
+	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
 	return vertexArrayObjects; // finally return the VAOs
 }
 
 void GlTFModel::Draw()
 {
-	std::cout << " GLTF: DRAW" << std::endl;
+	//std::cout << " GLTF: DRAW" << std::endl;
 	const std::function<void(int, const glm::mat4&)> drawNode = [&](int nodeIdx, const glm::mat4& parentMatrix) {
 		// TODO The drawNode function
 		const auto& node = model.nodes[nodeIdx];
@@ -489,6 +508,54 @@ void GlTFModel::Draw()
 };
 
 #pragma endregion
+
+#pragma region FBXModel 
+
+FBXModel::FBXModel()
+{
+	// Load the model
+	loadFbxModel("../res/Models/Honours Models/fbx/avocado.fbx");
+}
+
+FBXModel::FBXModel(std::string const& path)
+{
+	// Load the model
+	loadFbxModel(path);
+}
+
+FBXModel::~FBXModel()
+{
+	_fbxScene->Destroy();
+	_manager->Destroy();
+}
+
+void FBXModel::loadFbxModel(std::string const& path)
+{
+	Timer t;
+	std::cout << "FBX: Start Loading FBX file" << path << std::endl;
+
+	// Load the model
+	FbxManager* sdkManager = FbxManager::Create();
+	FbxIOSettings* ios = FbxIOSettings::Create(sdkManager, IOSROOT);
+	sdkManager->SetIOSettings(ios);
+	FbxImporter* importer = FbxImporter::Create(sdkManager, "");
+	bool ret = importer->Initialize(path.c_str(), -1, sdkManager->GetIOSettings());
+	if (!ret) {
+		std::cerr << "FBX: Call to FbxImporter::Initialize() failed.\n";
+		std::cerr << "FBX: Error returned: " << importer->GetStatus().GetErrorString() << "\n\n";
+		return;
+	}
+	FbxScene* scene = FbxScene::Create(sdkManager, "myScene");
+	importer->Import(scene);
+	importer->Destroy();
+	std::cout << "FBX: File Loaded" << path << std::endl;
+	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "--------------------------------------------" << std::endl;
+}
+
+
+#pragma endregion
+
 
 #pragma region oldcode
 void MeshHandler::init(Vertex* vertices, unsigned int numVertices, unsigned int* indices, unsigned int numIndices)

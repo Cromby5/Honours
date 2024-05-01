@@ -5,12 +5,14 @@
 #include "obj_loader.h"
 #include "transform.h"
 #include "ShaderHandler.h"
+#include "Clock.h"
 
-
-// Assimp to load many different file formats for reference. Not used in the testing due to it being known to be slow in debug mode and difficult with fbx files.
+// Assimp to load many different file formats for reference. known to be slow in debug mode and may have niche issues with fbx files.
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+#include <tinyObj/tiny_obj_loader2.h>
 
 // Here we are focusing on 1 file format per reader for research purposes. obj reader, fbx sdk, json reader
 //#include <json/json.hpp> // TO HELP READ JSON FILES, in this case our glTF files
@@ -53,9 +55,9 @@ public:
 
 	// not to sure if I need these yet
 	//// tangent
-	//glm::vec3 Tangent;
+	glm::vec3 Tangent;
 	//// bitangent
-	//glm::vec3 Bitangent;
+	glm::vec3 Bitangent;
 	////bone indexes which will influence this vertex
 	//int m_BoneIDs[4];
 	////weights from each bone
@@ -250,7 +252,7 @@ private:
 	}
 };
 
-
+#pragma region GLTFModel 
 struct VaoRange
 {
 	GLsizei start; // Index of first element in vertexArrayObjects
@@ -263,7 +265,7 @@ public:
 	GlTFModel();
 	GlTFModel(const std::string &path);
 
-	bool loadGltfFile(const std::string& path);
+	bool loadGltfFile(const std::string& path, int type);
 
 	std::vector<GLuint> createBufferObjects(); // const tinygltf::Model& model
 	std::vector<GLuint> createVertexArrayObjects();
@@ -273,12 +275,14 @@ public:
 private:
 
 	//std::filesystem::path _file;
-	tinygltf::Model model;
+	tinygltf::Model model; // tinygltf model definition
 	std::vector<GLuint> bufferObjects;
 	std::vector<VaoRange> meshToVertexArrays;
 	std::vector<GLuint> vertexArrayObjects;
 };
+#pragma endregion
 
+#pragma region FBXModel
 struct scene;
 struct scene_data;
 struct mesh;
@@ -287,19 +291,62 @@ struct geo_import_settings;
 class fbxDescriptor // this is a descriptor for the fbx model, it will be used to store the data from the fbx model
 {
 public:
-	fbxDescriptor(const char* file, scene* scene, scene_data* data);
-		
+	fbxDescriptor(const char* file, scene* scene, scene_data* data) : _scene{ scene }, _data{ data }
+	{
+		assert(file && _scene && _data); 
+		if (fbx_init())
+		{
+			loadFbxFile(file);
+			assert(is_valid());
+		}
+	}
 
+	~fbxDescriptor()
+	{
+		_fbxScene->Destroy();
+		_manager->Destroy();
+		//ZeroMemory(this, sizeof(fbxDescriptor));
+	}
+
+	constexpr bool is_valid() const { return _manager && _scene; } // check if the fbx model is valid
+	constexpr glm::f32 scale() const { return _scaleFactor; } // get the scale factor of the fbx model
 private:
-	bool fbx_init;
+	bool fbx_init();
 	void loadFbxFile(const char* file);
 
 	scene* _scene{nullptr};
 	scene_data* _data{nullptr};
+	FbxManager* _manager{nullptr};
+	FbxScene* _fbxScene{nullptr};
+	glm::f32 _scaleFactor{1.0f};
 	
 };
 
-// OLD
+
+class FBXModel
+{
+public:
+	FBXModel();
+	FBXModel(const std::string& filename);
+	~FBXModel();
+
+	void loadFbxModel(const std::string& filename);
+
+
+private:
+	FbxManager* _manager{ nullptr };
+	FbxScene* _fbxScene{ nullptr };
+	FbxImporter* _importer{ nullptr };
+	FbxIOSettings* _ios{ nullptr };
+	FbxGeometryConverter* _converter{ nullptr };
+	FbxNode* _rootNode{ nullptr };
+	
+
+};
+#pragma endregion
+
+
+#pragma region oldcode
 class MeshHandler
 {
 public:
@@ -330,3 +377,4 @@ private:
 	GLuint VAB[NUM_BUFFERS]; // create our array of buffers
 	unsigned int drawCount; // how much of the vertexArrayObject do we want to draw
 };
+#pragma endregion

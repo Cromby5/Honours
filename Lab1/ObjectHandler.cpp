@@ -32,21 +32,18 @@ void ObjectHandler::initObjects()
 	objects[0].SetObjectPos(glm::vec3(0, -6.0, 0));
 	objects[0].SetObjectRot(glm::vec3(0, 0, 0));
 
-	tempObject.LoadObject(models[2], textures[4], shaders[0]); // FBX TEST
-	objects.emplace_back(tempObject);
-	objects[1].SetObjectPos(glm::vec3(10, -6.0, 0));
-	objects[1].SetObjectRot(glm::vec3(0, 0, 0));
-	objects[1].SetObjectScale(glm::vec3(0.3, 0.3, 0.3));
 
-	tempObject.LoadObject(models[3], textures[5], shaders[0]); // FBX TEST 2
-	objects.emplace_back(tempObject);
-	objects[2].SetObjectPos(glm::vec3(10, -6.0, 7));
-	objects[2].SetObjectRot(glm::vec3(0, 0, 0));
-	objects[2].SetObjectScale(glm::vec3(0.3, 0.3, 0.8));
+	//tempObject.LoadObject(models[3], textures[5], shaders[0]); // FBX TEST 2
+	//objects.emplace_back(tempObject);
+	//objects[1].SetObjectPos(glm::vec3(10, -6.0, 7));
+	//objects[1].SetObjectRot(glm::vec3(0, 0, 0));
+	//objects[1].SetObjectScale(glm::vec3(0.3, 0.3, 0.8));
 
 
-	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf"); // OUTPUT 1 VAO
-	testModel.loadGltfFile("../res/Models/glTF/Sponza/glTF/Sponza.gltf"); // OUTPUT 103 VAO
+	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf",0); // OUTPUT 1 VAO
+	testModel.loadGltfFile("../res/Models/Honours Models/glTF/avocado/avocado.gltf",0); 
+	//testModel.loadGltfFile("../res/Models/Honours Models/glb/avocado.glb", 1);
+
 	testModel.createBufferObjects();
 	testModel.createVertexArrayObjects();
 
@@ -140,14 +137,9 @@ void ObjectHandler::initMeshes()
 	models.emplace_back(tempModel);
 	tempModel.clearModel();
 
-	tempModel.loadModel("../res/Models/container-low/container.fbx");
+	tempModel.loadModel("../res/Models/Honours Models/glTF/Sponza/glTF/Sponza.gltf");
 	models.emplace_back(tempModel);
 	tempModel.clearModel();
-
-	tempModel.loadModel("../res/Models/BoomBox.glb");
-	models.emplace_back(tempModel);
-	tempModel.clearModel();
-
 }
 
 void ObjectHandler::drawObjects(WorldCamera& myCamera , float counter, float newCount)
