@@ -4,6 +4,8 @@ Honours Project GCU CW 2023-2024
 This program will not function without the fbx sdk locally installed on your machine, https://www.autodesk.com/developer-network/platform-technologies/fbx-sdk-2020-3
 I cannot directly include it due to licencing
 
+The files tested within the project could not all be included due to high file sizes
+
 This is using my Games Programming 2 CW and Graphics Programming as a base to start from
 
 
