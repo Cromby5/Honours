@@ -309,12 +309,13 @@ bool GlTFModel::loadGltfFile(std::string const& path, int type)
 		std::cout << "Failed to parse glTF file" << std::endl;
 		return false;
 	}
+	timeToLoad = t.elapsed();
 	// Load the textures
 	//loadTextures();
 	// Load the meshes
 	//loadMeshes();
 	std::cout << "GLTF: File Loaded" << path << std::endl;
-	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "Time elapsed: " << timeToLoad << " seconds\n";
 	std::cout << "--------------------------------------------" << std::endl;
 	return true;
 }
@@ -334,9 +335,10 @@ std::vector<GLuint> GlTFModel::createBufferObjects()
 		glBufferStorage(GL_ARRAY_BUFFER, model.buffers[i].data.size(), model.buffers[i].data.data(), 0);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	timeToBuffer = t.elapsed();
 	std::cout << " GLTF: Buffer Objects Created" << std::endl;
 	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	
 	return bufferObjects;
 }
 
@@ -445,9 +447,13 @@ std::vector<GLuint> GlTFModel::createVertexArrayObjects()
 		}
 	}
 	glBindVertexArray(0); // unbind the VAO
+	timeToVertexArray = t.elapsed();
 	std::clog << "GLTF: Number of VAOs: " << vertexArrayObjects.size() << std::endl; // print the number of VAOs created
 	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
-
+	timeTotal = timeToLoad + timeToBuffer + timeToVertexArray + timeToTexture;
+	std::cout << "--------------------------------------------" << std::endl;
+	std::cout << "TOTAL Time elapsed: " << timeTotal << " seconds\n";
+	std::cout << "--------------------------------------------" << std::endl;
 	PROCESS_MEMORY_COUNTERS_EX pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
 	SIZE_T virtualMemUsedByMe = pmc.PrivateUsage;
@@ -503,8 +509,10 @@ std::vector<GLuint> GlTFModel::createTextureObjects()
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	timeToTexture = t.elapsed();
+
 	std::cout << " GLTF: Texture Objects Created" << std::endl;
-	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
+	std::cout << "Time elapsed: " << timeToTexture << " seconds\n";
 	std::cout << "--------------------------------------------" << std::endl;
 
 	return textureObjects;
@@ -577,8 +585,11 @@ FBXModel::FBXModel()
 {
 	// Load the model
 	//loadFbxModel("../res/Models/Honours Models/fbx/avocado.fbx");
-	//loadFbxModel("../res/Models/Honours Models/fbx/Sci-Fi soldier/source/Idle.fbx");
-	loadFbxModel("../res/Models/Honours Models/fbx/BarramundiFish.fbx");
+	
+	//loadFbxModel("../res/Models/Honours Models/fbx/BackPackNOTEX.fbx");
+	//loadFbxModel("../res/Models/Honours Models/fbx/backpack.fbx");
+
+	//loadFbxModel("../res/Models/Honours Models/fbx/astro.fbx");
 }
 
 FBXModel::FBXModel(std::string const& path)
@@ -622,8 +633,13 @@ void FBXModel::loadFbxModel(std::string const& path)
 	{
 		SetupNode(_fbxScene->GetRootNode(), "null");
 	}
+	else
+	{
+		std::cout << "FBX: No Root Node" << std::endl;
+	}
 
 	_importer->Destroy();
+
 
 	std::cout << "FBX: File Loaded" << path << std::endl;
 	std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
@@ -693,7 +709,10 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 	FbxVector4* vertices = pMesh->GetControlPoints();
 	for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
 	{
-		std::cout << "Vertex " << i << ": " << vertices[i][0] << " " << vertices[i][1] << " " << vertices[i][2] << std::endl;
+		Vertex vertex;
+		vertex.pos = glm::vec3(vertices[i][0], vertices[i][1], vertices[i][2]);
+		//std::cout << "Vertex " << i << ": " << vertex.pos.x << " " << vertex.pos.y << " " << vertex.pos.z << std::endl;
+
 	}
 	// Indices
 	for (int i = 0; i < pMesh->GetPolygonCount(); i++)
@@ -702,7 +721,8 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		for (int j = 0; j < numVertices; j++)
 		{
 			int vertexIndex = pMesh->GetPolygonVertex(i, j);
-			std::cout << "Index" << vertexIndex << std::endl;
+
+			//std::cout << "Index" << vertexIndex << std::endl;
 		}
 	}
 
@@ -713,7 +733,8 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
 		{
 			FbxVector4 normal = normalElement->GetDirectArray().GetAt(i);
-			std::cout << "Normal " << i << ": " << normal[0] << " " << normal[1] << " " << normal[2] << std::endl;
+
+			//std::cout << "Normal " << i << ": " << normal[0] << " " << normal[1] << " " << normal[2] << std::endl;
 		}
 	}
 
@@ -724,7 +745,8 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		for (int i = 0; i < pMesh->GetControlPointsCount(); i++)
 		{
 			FbxVector2 uv = uvElement->GetDirectArray().GetAt(i);
-			std::cout << "UV " << i << ": " << uv[0] << " " << uv[1] << std::endl;
+
+			//std::cout << "UV " << i << ": " << uv[0] << " " << uv[1] << std::endl;
 		}
 	}
 
@@ -736,7 +758,8 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		for (int i = 0; i < materialCount; i++)
 		{
 			FbxSurfaceMaterial* material = node->GetMaterial(i);
-			std::cout << "Material " << i << ": " << material->GetName() << std::endl;
+
+			//std::cout << "Material " << i << ": " << material->GetName() << std::endl;
 		}
 	}
 
@@ -747,7 +770,8 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		if (property.GetSrcObjectCount<FbxTexture>() > 0)
 		{
 			FbxTexture* texture = property.GetSrcObject<FbxTexture>();
-			std::cout << "Texture: " << texture->GetName() << std::endl;
+
+			//std::cout << "Texture: " << texture->GetName() << std::endl;
 		}
 		property = pMesh->GetNextProperty(property);
 	}
@@ -761,13 +785,11 @@ void FBXModel::SetupMesh(FbxMesh* pMesh)
 		{
 			FbxCluster* cluster = skin->GetCluster(i);
 			FbxNode* link = cluster->GetLink();
-			std::cout << "Cluster " << i << ": " << link->GetName() << std::endl;
+			//std::cout << "Cluster " << i << ": " << link->GetName() << std::endl;
 		}
 
 	}
 };
-
-
 #pragma endregion
 
 

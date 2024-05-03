@@ -397,3 +397,7 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 Games Programming 3 Ben Reid.docx
+/res/Models/Honours Models/glTF/mercenary_astronaut2
+res/Models/Honours Models/fbx/astro.fbx
+res/Models/Honours Models/fbx/backpack.fbx
+res/Models/Honours Models/glb/mercenary_astronaut.glb

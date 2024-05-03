@@ -6,13 +6,19 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyObj/tiny_obj_loader2.h>
 
+#include "windows.h"
+#include "psapi.h"
 
 using namespace std;
 
 tinyObjModel:: tinyObjModel()
 {
 	//ctor
-    loadModel("../res/Models/Honours Models/obj/avocado/avocado.obj");
+    //loadModel("../res/Models/Honours Models/obj/avocado/avocado.obj");
+    //loadModel("../res/Models/ship.obj"); 
+    //loadModel("../res/Models/Honours Models/obj/backpacknotex/backpack.obj");
+    //loadModel("../res/Models/backpack/backpack.obj");
+    loadModel("../res/Models/Honours Models/obj/astro/astro.obj");
 }
 
 tinyObjModel:: ~tinyObjModel()
@@ -24,9 +30,11 @@ void tinyObjModel::loadModel(const std::string& path)
 {
     Timer t;
     std::cout << "OBJ: Start Loading OBJ file" << path << std::endl;
-    //std::string inputfile = "../res/Models/ship.obj"; overide path
+    //std::string inputfile = "../res/Models/ship.obj"; overide path, quick vertice check
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "../res/Models/Honours Models/obj/avocado/"; // Path to material files, temorary fix
+    //reader_config.mtl_search_path = "../res/Models/Honours Models/obj/avocado/"; // Path to material files, temorary fix
+
+    reader_config.mtl_search_path = "";
 
     tinyobj::ObjReader reader;
 
@@ -102,12 +110,11 @@ void tinyObjModel::loadModel(const std::string& path)
     std::cout << "OBJ: File Loaded" << path << std::endl;
     std::cout << "Time elapsed: " << t.elapsed() << " seconds\n";
     std::cout << "--------------------------------------------" << std::endl;
-}
 
-
-
-
-void tinyObjModel::draw()
-{
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+    SIZE_T virtualMemUsedByMe = pmc.PrivateUsage;
+    std::cout << "Memory used by OBJ Model: " << virtualMemUsedByMe << std::endl;
+    std::cout << "--------------------------------------------" << std::endl;
 
 }

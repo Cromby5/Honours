@@ -19,19 +19,25 @@ void ObjectHandler::initObjects()
 	//testModel.loadGltfFile("../res/Models/glTF/Cube/glTF/Cube.gltf",0); // OUTPUT 1 VAO
 	
 	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/avocado/avocado.gltf", 0);
-	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/Sci-Fi soldier/scene.gltf", 0);
-    testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/BarramundiFish/BarramundiFish.gltf", 0);
+	
+	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/backpack/scene.gltf", 0);
+	//testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/notexbackpack/scene.gltf", 0);
+	/*testgltfModel.loadGltfFile("../res/Models/Honours Models/glTF/mercenary_astronaut2/scene.gltf", 0);
 
 
 	testgltfModel.createTextureObjects();
 	testgltfModel.createBufferObjects();
-	testgltfModel.createVertexArrayObjects();
+	testgltfModel.createVertexArrayObjects();*/
 
 	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/avocado.glb", 1);
-	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/sci-fi_supersoldier.glb", 1);
+
+	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/backpacknotex.glb", 1);
+	//testglbModel.loadGltfFile("../res/Models/Honours Models/glb/backpack.glb", 1);
+	/*testglbModel.loadGltfFile("../res/Models/Honours Models/glb/mercenary_astronaut.glb", 1);
+
 	testglbModel.createTextureObjects();
 	testglbModel.createBufferObjects();
-	testglbModel.createVertexArrayObjects();
+	testglbModel.createVertexArrayObjects();*/
 
 
 	// Unsure whats going on that I can't use the constructor to load the objects directly into the vector of objects without the data being wrong in someway,
@@ -142,11 +148,11 @@ void ObjectHandler::initMeshes()
 
 	//OTHER FORMAT ZONE
 
-	//tempModel.loadModel("../res/Models/towerRound_sampleB.fbx");
-	//models.emplace_back(tempModel);
-	//tempModel.clearModel();
+	tempModel.loadModel("../res/Models/towerRound_sampleB.fbx");
+	models.emplace_back(tempModel);
+	tempModel.clearModel();
 
-	tempModel.loadModel("../res/Models/Honours Models/glTF/avocado/avocado.gltf");
+	/*tempModel.loadModel("../res/Models/Honours Models/glTF/avocado/avocado.gltf");
 	models.emplace_back(tempModel);
 	tempModel.clearModel();
 
@@ -161,7 +167,16 @@ void ObjectHandler::initMeshes()
 	
 	tempModel.loadModel("../res/Models/Honours Models/fbx/avocado.fbx");
 	models.emplace_back(tempModel);
+	tempModel.clearModel();*/
+
+	tempModel.loadModel("../res/Models/Honours Models/fbx/BackPackNOTEX.fbx");
+	models.emplace_back(tempModel);
 	tempModel.clearModel();
+
+
+   /* tempModel.loadModel("../res/Models/Honours Models/fbx/astronaut.fbx");
+	models.emplace_back(tempModel);
+	tempModel.clearModel();*/
 }
 
 void ObjectHandler::drawObjects(WorldCamera& myCamera , float counter, float newCount)
@@ -180,8 +195,8 @@ void ObjectHandler::drawObjects(WorldCamera& myCamera , float counter, float new
 		objects[i]._shader.Use();
 		objects[i]._shader.Update(objects[i]._transform, myCamera, counter, newCount);
 		objects[i]._texture.Bind(0);
-		testgltfModel.Draw();
-		testglbModel.Draw();
+		//testgltfModel.Draw();
+		//testglbModel.Draw();
 		// Temp overrides, carried across from inital project state to test the new object handler.
 		// For spec/normal map testing on the bricks and backpack
 		/*

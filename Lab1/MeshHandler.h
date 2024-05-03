@@ -280,48 +280,56 @@ private:
 	std::vector<VaoRange> meshToVertexArrays;
 	std::vector<GLuint> vertexArrayObjects;
 	std::vector<GLuint> textureObjects;
+
+	// timing variables
+	double timeToLoad = 0.0f;
+	double timeToBuffer = 0.0f;
+	double timeToVertexArray = 0.0f;
+	double timeToTexture = 0.0f;
+	double timeTotal = 0.0f;
+
 };
 #pragma endregion
 
 #pragma region FBXModel
-struct scene;
-struct scene_data;
-struct mesh;
-struct geo_import_settings;
-
-class fbxDescriptor // this is a descriptor for the fbx model, it will be used to store the data from the fbx model
-{
-public:
-	fbxDescriptor(const char* file, scene* scene, scene_data* data) : _scene{ scene }, _data{ data }
-	{
-		assert(file && _scene && _data); 
-		if (fbx_init())
-		{
-			loadFbxFile(file);
-			assert(is_valid());
-		}
-	}
-
-	~fbxDescriptor()
-	{
-		_fbxScene->Destroy();
-		_manager->Destroy();
-		//ZeroMemory(this, sizeof(fbxDescriptor));
-	}
-
-	constexpr bool is_valid() const { return _manager && _scene; } // check if the fbx model is valid
-	constexpr glm::f32 scale() const { return _scaleFactor; } // get the scale factor of the fbx model
-private:
-	bool fbx_init();
-	void loadFbxFile(const char* file);
-
-	scene* _scene{nullptr};
-	scene_data* _data{nullptr};
-	FbxManager* _manager{nullptr};
-	FbxScene* _fbxScene{nullptr};
-	glm::f32 _scaleFactor{1.0f};
-	
-};
+//struct scene;
+//struct scene_data;
+//struct mesh;
+//struct geo_import_settings;
+//
+//class fbxDescriptor // this is a descriptor for the fbx model, it will be used to store the data from the fbx model
+//{
+//public:
+//	fbxDescriptor(const char* file, scene* scene, scene_data* data) : _scene{ scene }, _data{ data }
+//	{
+//		assert(file && _scene && _data); 
+//		if (fbx_init())
+//		{
+//			loadFbxFile(file);
+//			assert(is_valid());
+//		}
+//	}
+//
+//	~fbxDescriptor()
+//	{
+//		_fbxScene->Destroy();
+//		_manager->Destroy();
+//		//ZeroMemory(this, sizeof(fbxDescriptor));
+//	}
+//
+//	constexpr bool is_valid() const { return _manager && _scene; } // check if the fbx model is valid
+//	constexpr glm::f32 scale() const { return _scaleFactor; } // get the scale factor of the fbx model
+//private:
+//	bool fbx_init();
+//	void loadFbxFile(const char* file);
+//
+//	scene* _scene{nullptr};
+//	scene_data* _data{nullptr};
+//	FbxManager* _manager{nullptr};
+//	FbxScene* _fbxScene{nullptr};
+//	glm::f32 _scaleFactor{1.0f};
+//	
+//};
 
 
 class FBXModel
